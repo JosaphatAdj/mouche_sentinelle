@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useRef } from "react";
 import Link from "next/link";
@@ -43,7 +43,8 @@ export default function ScanPage() {
       formData.append("file", selectedFile);
       formData.append("crop", crop);
 
-      const res = await fetch("http://localhost:8000/api/detection/scan", {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const res = await fetch(`${API_BASE_URL}/api/detection/scan`, {
         method: "POST",
         body: formData
       });

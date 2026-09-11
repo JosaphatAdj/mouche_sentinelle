@@ -37,6 +37,8 @@ interface Message {
   cachedAudioUrl?: string;
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
 interface TestScenario {
   id: string;
   title: string;
@@ -204,7 +206,7 @@ export default function AdvisorChatPage() {
           formData.append("file", selectedImage);
           formData.append("crop", currentCrop);
 
-          const scanRes = await fetch("http://localhost:8000/api/detection/scan", {
+          const scanRes = await fetch(`${API_BASE_URL}/api/detection/scan`, {
             method: "POST",
             body: formData
           });
@@ -229,7 +231,7 @@ export default function AdvisorChatPage() {
         ? `[PHOTO DU PIÈGE ANALYSÉE PAR YOLO11n] ${trapCount} mouches détectées (${detectionDetails?.dorsalis || 0} B. dorsalis, ${detectionDetails?.zonata || 0} B. zonata) sur ${currentCrop}. ${textToSend}`
         : textToSend;
 
-      const res = await fetch("http://localhost:8000/api/advisory/consult", {
+      const res = await fetch(`${API_BASE_URL}/api/advisory/consult`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -262,7 +264,7 @@ export default function AdvisorChatPage() {
         ]);
 
         if (language === "fon" && data.advice_text) {
-          fetch("http://localhost:8000/api/tts/generate", {
+          fetch(`${API_BASE_URL}/api/tts/generate`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ text: data.advice_text })
@@ -350,7 +352,7 @@ export default function AdvisorChatPage() {
 
     if (language === "fon") {
       try {
-        const res = await fetch("http://localhost:8000/api/tts/generate", {
+        const res = await fetch(`${API_BASE_URL}/api/tts/generate`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: msg.text })
