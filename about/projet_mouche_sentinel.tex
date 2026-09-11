@@ -1,0 +1,132 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[french]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{geometry}
+\geometry{margin=2.5cm}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titling}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{Josaphat ADJELE}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\title{Mouche Sentinel — Surveillance intelligente de la\\ Mouche des Fruits (\textit{Bactrocera dorsalis / zonata})}
+\author{Deep Learning IndabaX Bénin 2026\\ \textit{Défis : Agriculture et sécurité alimentaire × IA et langues locales}}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Le problème}
+
+La mouche des fruits (\textit{Bactrocera dorsalis}, et sa cousine \textit{Bactrocera zonata}) est l'un des ravageurs les plus dommageables pour l'arboriculture fruitière en Afrique de l'Ouest.
+
+\textbf{Chiffres au Bénin :}
+\begin{itemize}
+    \item Selon des données béninoises rapportées par les services agricoles de La Réunion, la perte de production sur mangue due à \textit{B. dorsalis} varie de \textbf{15 à 70\%} selon les variétés, les variétés tardives étant les plus touchées \cite{daaf}.
+\end{itemize}
+
+\textbf{Une espèce qui ne touche pas que la mangue.} \textit{B. dorsalis} est une espèce extrêmement polyphage : elle est recensée sur \textbf{plus de 400 hôtes sauvages et cultivés} à travers le monde \cite{jardinsdefrance}. Au-delà de la mangue, elle s'attaque également à d'autres cultures fruitières comme l'ananas et la banane \cite{departement974}, ainsi qu'à de nombreuses autres espèces fruitières et maraîchères selon les régions et les cultures disponibles localement \cite{jardinsdefrance}. Au Bénin, où mangue, ananas et agrumes sont des filières économiques importantes, l'ampleur potentielle du problème dépasse donc largement la seule culture du manguier.
+
+\textbf{Le système de surveillance existant — et sa limite concrète :}
+La méthode de référence pour surveiller \textit{B. dorsalis} est le \textbf{piégeage à attractif alimentaire/sexuel} (traditionnellement le méthyl eugénol, un attractif spécifique aux mâles). Cette méthode est activement utilisée et étudiée en Afrique de l'Ouest : une étude menée en Côte d'Ivoire (contexte agroécologique proche du Bénin) sur des vergers de manguiers a mesuré des captures moyennes de plusieurs milliers d'individus par piège avec le méthyl eugénol, et a testé des alternatives locales à base de basilic (\textit{Ocimum basilicum}) faute d'accès facile à l'attractif commercial pour les producteurs \cite{cotedivoire}.
+
+\textbf{Le goulot d'étranglement} : le relevé des pièges reste un exercice de \textbf{comptage manuel} des individus capturés, réalisé périodiquement par les producteurs ou les agents techniques --- une pratique documentée dans la littérature scientifique comme fastidieuse, intensive en main-d'œuvre et sujette aux erreurs \cite{review_ff}. Concrètement, l'observateur humain doit distinguer et compter les insectes ciblés, ce qui n'est pas toujours possible lorsqu'ils sont endommagés ou noyés dans un amas d'autres insectes capturés dans le piège \cite{surveillance_ff}. Sur le plan opérationnel, cette inspection manuelle doit être répétée régulièrement tout au long de la période de culture --- typiquement deux fois par semaine dans les protocoles de surveillance classiques \cite{embrapa_ff} --- ce qui représente une charge de travail répétée et un délai entre la détection réelle et son signalement.
+
+\section{La solution --- Mouche Sentinel}
+
+Un système à deux composants :
+
+\subsection{Détection temps réel par YOLO (cœur technique)}
+\begin{itemize}
+    \item Le producteur ou l'agent prend une photo du piège (bucket trap ou piège à plaque engluée) avec son smartphone.
+    \item Un modèle \textbf{YOLO léger} détecte et \textbf{compte automatiquement} les individus de \textit{B. dorsalis}/\textit{zonata} capturés, remplaçant le comptage manuel.
+    \item Le nombre de captures est suivi dans le temps (fréquence de captures par jour/piège, indicateur classiquement utilisé en entomologie pour évaluer la pression du ravageur) et comparé à un seuil d'alerte.
+    \item Alimentation automatique d'une base de suivi géoréférencée, sans ressaisie manuelle.
+\end{itemize}
+
+\subsection{Chatbot conseil en langue locale (Fon/Goun) --- défi IA et langues locales}
+Le chatbot est \textbf{branché sur les alertes générées par le détecteur}, ce qui le distingue d'un chatbot agricole générique.
+
+Fonctionnalités :
+\begin{itemize}
+    \item \textbf{Accès aux alertes en cours} : le producteur peut demander en langue locale « Que se passe-t-il dans mon verger ? » et le chatbot restitue le niveau de capture détecté et son évolution.
+    \item \textbf{Conseil contextualisé à la gravité et à la culture concernée} : les recommandations changent selon le niveau d'alerte et la culture touchée (mangue, ananas, agrumes...) — par exemple le ramassage et l'élimination des fruits piqués, l'usage d'un augmentorium pour favoriser les parasitoïdes naturels, ou en dernier recours le traitement localisé par attractif alimentaire, en cohérence avec les pratiques déjà documentées dans la sous-région \cite{cotedivoire}.
+    \item \textbf{Interface vocale} en Fon/Goun, pour rester accessible aux producteurs non-lettrés.
+    \item \textbf{Explicabilité simple} : le chatbot peut expliquer pourquoi une alerte a été déclenchée (nombre d'individus détectés, tendance).
+\end{itemize}
+
+\section{Architecture (vue d'ensemble)}
+
+\begin{verbatim}
+[Photo du piège] -> [Modèle YOLO temps réel] -> [Comptage + niveau de gravité]
+                                                          |
+                                                          v
+                                        [Base d'alertes géoréférencées]
+                                                          |
+                                                          v
+                        [Chatbot langue locale] <-- requête vocale producteur
+                                    |
+                                    v
+                     Réponse vocale : gravité + conseil d'action adapté à la culture
+\end{verbatim}
+
+\section{Données}
+
+\begin{itemize}
+    \item \textbf{Détection} : dataset public Mendeley Data, \textit{« An Image Dataset of Fruit Fly Species »}, contenant des images de \textit{Bactrocera zonata} et \textit{Bactrocera dorsalis} — les deux espèces ciblées par ce projet \cite{mendeley}. \\ \url{https://data.mendeley.com/datasets/hgz2n5jxhp/1}
+    \item \textbf{Chatbot} : corpus de conseils agronomiques existants sur la lutte contre la mouche des fruits (ramassage des fruits piqués, augmentorium, alternatives naturelles type basilic) \cite{cotedivoire, daaf}.
+\end{itemize}
+
+\textbf{Composition confirmée du dataset} : l'article associé à ce dataset précise qu'il contient \textbf{2 000 images} des deux espèces, capturées à la fois au smartphone (48 MP) et automatiquement via une \textbf{smart trap} installée au champ avec caméra Raspberry Pi (8 MP) --- le dataset inclut donc de vraies images de piège, et pas uniquement des spécimens isolés \cite{pmc_fruitfly}.
+
+\textbf{Modèle de base et transfer learning} : les auteurs ont eux-mêmes entraîné un modèle \textbf{YOLOv5} sur ce dataset, obtenant une précision moyenne de détection de \textbf{83\%} pour \textit{B. dorsalis} et \textbf{84\%} pour \textit{B. zonata} \cite{pmc_fruitfly}. Ce résultat constitue une preuve de concept publiée sur les données exactes que ce projet utilisera. Pour le hackathon, l'approche retenue est de partir d'un modèle \textbf{YOLOv8/v11 pré-entraîné sur COCO} (poids standards fournis par Ultralytics) et de le \textbf{fine-tuner} sur ce dataset de 2 000 images --- une méthode de transfer learning déjà validée empiriquement sur ces mêmes données, ce qui réduit sensiblement le risque d'échec rencontré lors des tests précédents sur un autre ravageur.
+
+\section{Pourquoi ce projet se démarque}
+
+\begin{itemize}
+    \item Impact chiffré et documenté (15--70\% de perte sur mangue au Bénin), avec un ravageur dont l'impact réel dépasse une seule culture.
+    \item Méthode de surveillance (piégeage) déjà pratiquée et étudiée dans la sous-région ouest-africaine, donc un vrai geste de terrain à automatiser plutôt qu'un problème abstrait.
+    \item Dataset public directement pertinent (espèces exactes ciblées), contrairement à d'autres ravageurs explorés en amont pour lesquels aucune donnée ouverte adaptée n'a été trouvée.
+    \item Combine naturellement les deux défis (agriculture/sécurité alimentaire + IA/langues locales) via un flux cohérent : détection $\rightarrow$ alerte $\rightarrow$ conseil vocal contextualisé.
+\end{itemize}
+
+\section{Limites à assumer honnêtement (pitch)}
+
+\begin{itemize}
+    \item Les données chiffrées sur les pertes (15--70\%) et sur les captures moyennes en piège proviennent de contextes proches (données béninoises relayées par un service réunionnais ; étude ivoirienne sur le piégeage) plutôt que d'une étude béninoise unique et exhaustive — à mentionner clairement en cas de question du jury.
+    \item Le contenu exact du dataset Mendeley (conditions de prise de vue, annotations disponibles) doit être vérifié avant l'entraînement.
+    \item Le chatbot en Fon/Goun pour un MVP hackathon peut être démontré sur un périmètre de phrases/intentions limité plutôt qu'une couverture linguistique complète.
+\end{itemize}
+
+\section{Prochaines étapes suggérées pour le hackathon}
+
+\begin{enumerate}
+    \item Télécharger et inspecter le dataset Mendeley (format, annotations, contexte des images).
+    \item Fine-tuner un YOLOv8n/YOLOv11n léger sur ce dataset, en priorisant les classes \textit{dorsalis} et \textit{zonata}.
+    \item Construire la logique seuil $\rightarrow$ niveau de gravité $\rightarrow$ message d'alerte, en tenant compte de la culture concernée.
+    \item Brancher un chatbot simple sur cette sortie d'alerte, avec réponses vocales en Fon/Goun pour la démo.
+    \item Préparer une démo live : photo de piège $\rightarrow$ détection $\rightarrow$ alerte $\rightarrow$ question orale au chatbot $\rightarrow$ réponse.
+\end{enumerate}
+
+\section*{Sources}
+\begin{itemize}[leftmargin=*]
+    \item[\cite{daaf}] DAAF Réunion --- Fiche technique « La mouche orientale des fruits (\textit{Bactrocera dorsalis}) » (cite des données d'impact économique au Bénin) \\ \url{https://daaf.reunion.agriculture.gouv.fr/IMG/pdf/Pages_de_Fiche_Bactrocera_dorsalis_5mai-2-3_cle8cffba.pdf}
+    \item[\cite{jardinsdefrance}] Jardins de France --- « La mouche \textit{Bactrocera dorsalis} : Un nouveau ravageur sur fruits et légumes » \\ \url{https://www.jardinsdefrance.org/la-mouche-bactrocera-dorsalis-un-nouveau-ravageur-sur-fruits-et-legumes/}
+    \item[\cite{departement974}] Département de La Réunion --- « Ensemble, agissons contre la Mouche des fruits Bactrocera dorsalis » (2019) \\ \url{https://www.departement974.fr/actualite/ensemble-agissons-contre-mouche-des-fruits-bactrocera-dorsalis-2019}
+    \item[\cite{cotedivoire}] ResearchGate --- « Piégeage des Mouches des Fruits (Diptera : Tephritidae) à base d'extraits de \textit{Ocimum basilicum} L. (Lamiaceae) : Cas de \textit{Bactrocera dorsalis}, principal ravageur de mangues en Côte d'Ivoire » \\ \url{https://www.researchgate.net/publication/339248174_Piegeage_des_Mouches_des_Fruits_Diptera_Tephritidae_A_Base_D'extraits_de_Ocimum_Basilicum_L_Lamiaceae_Cas_de_Bactrocera_Dorsalis_Principal_Ravageur_de_Mangues_en_Cote_d'Ivoire}
+    \item[\cite{mendeley}] Mendeley Data --- Tariq, S., Hakim, A., Siddiqi, A.A., Owais, M. « An Image Dataset of Fruit Fly Species » (2022) \\ \url{https://data.mendeley.com/datasets/hgz2n5jxhp/1}
+    \item[\cite{pmc_fruitfly}] PMC --- « An image dataset of fruitfly species (Bactrocera Zonata and Bactrocera Dorsalis) and automated species classification through object detection » (article associé au dataset ci-dessus, décrit la composition des données et les résultats obtenus avec YOLOv5) \\ \url{https://pmc.ncbi.nlm.nih.gov/articles/PMC9207304/}
+    \item[\cite{review_ff}] ScienceDirect --- « Fruit fly automatic detection and monitoring techniques: A review » (constat sur le caractère fastidieux, intensif en main-d'œuvre et sujet aux erreurs des méthodes manuelles) \\ \url{https://www.sciencedirect.com/science/article/pii/S2772375523001235}
+    \item[\cite{surveillance_ff}] PMC --- « Automated Surveillance of Fruit Flies » (décrit les difficultés concrètes du comptage manuel : insectes endommagés ou noyés dans un amas) \\ \url{https://ncbi.nlm.nih.gov/pmc/articles/PMC5298683}
+    \item[\cite{embrapa_ff}] Embrapa --- « Fruit Fly Electronic Monitoring System » (détail opérationnel sur la fréquence d'inspection manuelle des pièges, habituellement deux fois par semaine) \\ \url{https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/1146278/1/Fruit-Fly-Electronic-Monitoring-System.pdf}
+\end{itemize}
+
+\end{document}

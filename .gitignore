@@ -1,0 +1,61 @@
+﻿# =====================
+# PYTHON / BACKEND
+# =====================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+env/
+.env
+*.env
+!.env.example
+
+# Modeles IA (trop lourds pour git)
+backend/models/*.pt
+backend/models/*.onnx
+backend/models/best/
+!backend/models/README.md
+
+# Temporaires Python
+*.log
+*.cache
+*.sqlite
+*.db
+.pytest_cache/
+
+# =====================
+# NODE / FRONTEND
+# =====================
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.cache/
+frontend/.turbo/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# =====================
+# IDE & OS
+# =====================
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# =====================
+# ARCHIVES
+# =====================
+*.zip
+*.tar.gz
+*.rar
+node_modules/
