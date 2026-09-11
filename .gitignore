@@ -1,4 +1,4 @@
-﻿# =====================
+# =====================
 # PYTHON / BACKEND
 # =====================
 __pycache__/
@@ -19,7 +19,7 @@ env/
 
 # Modeles IA (trop lourds pour git)
 backend/models/*.pt
-backend/models/*.onnx
+# backend/models/*.onnx  # desactive: 10MB ok pour GitHub
 backend/models/best/
 !backend/models/README.md
 
