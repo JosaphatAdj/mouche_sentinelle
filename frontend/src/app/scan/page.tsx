@@ -43,7 +43,7 @@ export default function ScanPage() {
       formData.append("file", selectedFile);
       formData.append("crop", crop);
 
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://mouche-sentinelle.onrender.com";
       const res = await fetch(`${API_BASE_URL}/api/detection/scan`, {
         method: "POST",
         body: formData
