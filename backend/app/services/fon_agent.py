@@ -134,40 +134,58 @@ Réponds uniquement en JSON valide (sans code markdown ```json).
                 from google.genai import types
                 loop = asyncio.get_event_loop()
 
+                # Désactiver le thinking budget pour forcer une réponse directe sans tokens de réflexion
+                config_kwargs = {
+                    "temperature": 0.2,
+                    "max_output_tokens": 1500,
+                    "response_mime_type": "application/json"
+                }
+
+                # Si supporté par la version du SDK, couper le budget de pensée
+                try:
+                    config = types.GenerateContentConfig(
+                        temperature=0.2,
+                        max_output_tokens=1500,
+                        response_mime_type="application/json",
+                        thinking_config=types.ThinkingConfig(thinking_budget=0)
+                    )
+                except Exception:
+                    config = types.GenerateContentConfig(
+                        temperature=0.2,
+                        max_output_tokens=1500,
+                        response_mime_type="application/json"
+                    )
+
                 res = await loop.run_in_executor(
                     None,
                     lambda: self.client.models.generate_content(
                         model="gemini-3.6-flash",
                         contents=prompt,
-                        config=types.GenerateContentConfig(
-                            temperature=0.3,
-                            max_output_tokens=1200,  # Assez pour JSON complet
-                            response_mime_type="application/json"
-                        )
+                        config=config
                     )
                 )
 
-                # Extraire le texte en ignorant les thought_signature (tokens de réflexion)
+                # Extraire le texte en ignorant les parts non textuelles
                 raw_text = ""
                 try:
-                    candidate = res.candidates[0]
-                    for part in candidate.content.parts:
-                        if hasattr(part, "text") and part.text:
-                            raw_text += part.text
+                    if hasattr(res, "candidates") and res.candidates:
+                        for part in res.candidates[0].content.parts:
+                            if hasattr(part, "text") and part.text:
+                                raw_text += part.text
                 except Exception:
                     pass
 
-                # Fallback sur res.text si les parts n'ont rien donné
+                # Fallback sur res.text si nécessaire
                 if not raw_text and hasattr(res, "text") and res.text:
                     raw_text = res.text
 
                 raw_text = raw_text.strip()
-                print(f"[FonAgentService] Réponse brute ({len(raw_text)} chars): {raw_text[:150]}")
+                print(f"[FonAgentService] Réponse brute ({len(raw_text)} chars): {raw_text[:200]}")
 
                 parsed = self._extract_json(raw_text)
 
                 if not parsed:
-                    print("[FonAgentService] JSON non parseable, bascule fallback.")
+                    print("[FonAgentService] JSON non parseable, bascule fallback contextuel.")
                     return self._generate_fallback(req)
 
                 advice = parsed.get("advice_text", "").strip()
@@ -222,46 +240,82 @@ Réponds uniquement en JSON valide (sans code markdown ```json).
     def _generate_fallback(self, req: AdvisoryRequest) -> AdvisoryResponse:
         crop_names_fon = {"mangue": "Amangà", "agrumes": "Klémantíni kpo Klé kpo", "ananas": "Agonké"}
         crop_name = crop_names_fon.get(req.crop.lower(), "Atinsínsɛ́n")
-        has_trap = req.trap_count and req.trap_count > 0
+        trap_count = req.trap_count if req.trap_count is not None else 0
+        is_photo_alert = (trap_count > 0) or (req.alert_level in ["medium", "critical"])
 
         if req.language == "fon":
-            if has_trap:
-                advice = (
-                    f"Xɛsi ɖo gbeji nú {crop_name} towe ! "
-                    f"Mouche sukpɔ́ ɖo hɔntɔn mɛ ({req.trap_count} mɔ). "
-                    "Bɛ́ amangà e jɛ ayǐ lɛ́ bǐ bló ɖokpó ! Sɔ́ dó saki wiwi mɛ dó hwesivɔ mɛ azǎn we !"
-                )
+            if is_photo_alert:
+                if trap_count >= 5 or req.alert_level == "critical":
+                    advice = (
+                        f"Xɛsi kpo gbigbɔ kpo ɖo {crop_name} towe jí ! Mouche {trap_count} wɛ ɖo hɔntɔn mɛ. "
+                        "Bɛ́ atínsínsɛ́n e jɛ ayǐ lɛ́ bǐ bló ɖokpó azɔn we ɖo sɛmɛn ! "
+                        "Sɔ́ dó saki wiwi glógló mɛ bo tɛ́ dó hwesivɔ mɛ azǎn we nú larves lɛ́ na kú."
+                    )
+                    actions = [
+                        "Bɛ́ amangà e jɛ ayǐ lɛ́ bǐ azɔn we ɖo sɛmɛn (Ramasser les fruits tombés 2x/semaine)",
+                        "Solarisation : Sɔ́ dó saki wiwi mɛ dó hwesivɔ mɛ azǎn we",
+                        "Zǎn basilic (késukésu) nú pièges artisanal lɛ́"
+                    ]
+                else:
+                    advice = (
+                        f"Mouche kpɛɖé wɛ ɖo hɔntɔn mɛ ({trap_count} mɔ). "
+                        f"Nǔ lɛ́ kpo ɖo jlɛ̌jí nú {crop_name} towe, amɔ̌ kpɔ́n atínsínsɛ́n lɛ́ ganji bo bɛ́ nǔ e jɛ ayǐ lɛ́."
+                    )
+                    actions = [
+                        "Kpɔ́n pièges lɛ́ gbè bǐ gbè",
+                        "Bɛ́ atínsínsɛ́n e jɛ ayǐ lɛ́"
+                    ]
+                phonetic = "Xesi kpon kpon ganji. Be amanga le bi."
             else:
                 advice = (
-                    f"Nú amangà towe ma kɔn mouche sukpɔ́ à, xɛsi ɖěbǔ ɖò finɛ ǎ. "
-                    "Kpɔ́n atínsínsɛ́n lɛ́ bó bɛ́ nǔ e jɛ ayǐ lɛ́ bló ɖokpó."
+                    f"Nú {crop_name} towe, xɛsi ɖěbǔ ɖò finɛ nú mouche ǎ kakɔ̀. "
+                    "Nú a jló na glɔ́n ali nú mouche des fruits ɔ, nɔ bɛ́ atínsínsɛ́n e jɛ ayǐ lɛ́ bo nɔ tɛ́n pièges lɛ́ ganji."
                 )
-            phonetic = "Xesi kpon kpon ganji. Be amanga le bi."
-            actions = [
-                "Bɛ́ amangà e jɛ ayǐ lɛ́ bǐ (Ramasser tous les fruits tombés)",
-                "Sɔ́ dó saki wiwi mɛ (Solariser dans sacs plastiques noirs étanches)"
-            ]
+                phonetic = "Kpon ganji. Be amanga le bi."
+                actions = [
+                    "Surveillance régulière des vergers",
+                    "Entretien et nettoyage sous les arbres"
+                ]
         else:
-            if has_trap:
-                advice = (
-                    f"Alerte pour vos {req.crop}s ({req.trap_count} mouches détectées). "
-                    "Ramassez immédiatement tous les fruits tombés et isolez-les en sacs hermétiques."
-                )
+            if is_photo_alert:
+                if trap_count >= 5 or req.alert_level == "critical":
+                    advice = (
+                        f"Alerte infestation élevée sur vos vergers de {req.crop}s ({trap_count} mouches détectées). "
+                        "Appliquez d'urgence la lutte prophylactique : ramassage systématique des fruits tombés au sol au moins 2 fois par semaine, "
+                        "puis solarisation immédiate en sacs plastiques noirs hermétiques exposés 48h au soleil pour neutraliser les larves."
+                    )
+                    actions = [
+                        "Ramassage systématique 2 fois par semaine des fruits au sol",
+                        "Solarisation 48h en sacs plastiques hermétiques noirs au plein soleil",
+                        "Dépose des fruits en augmentorium pour sauver les parasitoïdes utiles",
+                        "Installation de pièges d'appoint au basilic local (Ocimum basilicum)"
+                    ]
+                else:
+                    advice = (
+                        f"Présence modérée détectée sur vos {req.crop}s ({trap_count} mouches). "
+                        "La situation est sous contrôle mais nécessite une vigilance accrue : maintenez la parcelle propre et inspectez vos pièges deux fois par semaine."
+                    )
+                    actions = [
+                        "Inspection rapprochée des pièges 2 fois par semaine",
+                        "Ramassage préventif des premiers fruits tombés",
+                        "Vérification des bordures de parcelle"
+                    ]
             else:
                 advice = (
-                    f"Les pertes peuvent atteindre 15 à 70% si le verger de {req.crop}s n'est pas surveillé. "
-                    "Effectuez un ramassage régulier 2 fois par semaine et surveillez vos pièges pour éviter toute prolifération."
+                    f"Surveillance de routine pour vos vergers de {req.crop}s : aucun seuil critique n'est dépassé. "
+                    "Pour éviter toute attaque de Bactrocera à l'approche de la récolte, maintenez un ramassage régulier des fruits au sol et assurez-vous que vos pièges sont bien rechargés en attractif."
                 )
+                actions = [
+                    "Surveillance préventive hebdomadaire",
+                    "Nettoyage régulier sous la canopée des arbres",
+                    "Récolte au stade vert-mûr (physiologique)"
+                ]
             phonetic = None
-            actions = [
-                "Ramassage systématique 2 fois par semaine des fruits au sol",
-                "Solarisation 48h en sacs plastiques hermétiques noirs au soleil"
-            ]
 
         return AdvisoryResponse(
             language=req.language,
             crop=req.crop,
-            alert_level=req.alert_level or "low",
+            alert_level=req.alert_level or ("critical" if trap_count >= 5 else "low"),
             advice_text=advice,
             phonetic_fon=phonetic,
             action_items=actions,
