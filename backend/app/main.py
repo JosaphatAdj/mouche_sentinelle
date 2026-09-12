@@ -52,7 +52,7 @@ app.include_router(advisory.router, prefix="/api")
 app.include_router(traps.router, prefix="/api")
 app.include_router(tts.router, prefix="/api")
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {
         "project": "Mouche Sentinel",
@@ -61,6 +61,6 @@ def root():
         "docs_url": "/docs"
     }
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 def health_check():
     return {"status": "healthy"}
