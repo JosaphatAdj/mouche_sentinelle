@@ -134,27 +134,11 @@ Réponds uniquement en JSON valide (sans code markdown ```json).
                 from google.genai import types
                 loop = asyncio.get_event_loop()
 
-                # Désactiver le thinking budget pour forcer une réponse directe sans tokens de réflexion
-                config_kwargs = {
-                    "temperature": 0.2,
-                    "max_output_tokens": 1500,
-                    "response_mime_type": "application/json"
-                }
-
-                # Si supporté par la version du SDK, couper le budget de pensée
-                try:
-                    config = types.GenerateContentConfig(
-                        temperature=0.2,
-                        max_output_tokens=1500,
-                        response_mime_type="application/json",
-                        thinking_config=types.ThinkingConfig(thinking_budget=0)
-                    )
-                except Exception:
-                    config = types.GenerateContentConfig(
-                        temperature=0.2,
-                        max_output_tokens=1500,
-                        response_mime_type="application/json"
-                    )
+                config = types.GenerateContentConfig(
+                    temperature=0.2,
+                    max_output_tokens=2500,
+                    response_mime_type="application/json"
+                )
 
                 res = await loop.run_in_executor(
                     None,
