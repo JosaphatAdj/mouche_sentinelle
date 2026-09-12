@@ -1,5 +1,8 @@
-﻿from fastapi import APIRouter, File, UploadFile, Form
-from backend.app.services.detector import detector_service, DetectionResult
+from fastapi import APIRouter, File, UploadFile, Form
+try:
+    from backend.app.services.detector import detector_service, DetectionResult
+except ModuleNotFoundError:
+    from app.services.detector import detector_service, DetectionResult
 
 router = APIRouter(prefix="/detection", tags=["Detection"])
 

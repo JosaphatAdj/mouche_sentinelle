@@ -1,5 +1,8 @@
-﻿from fastapi import APIRouter
-from backend.app.services.fon_agent import fon_agent_service, AdvisoryRequest, AdvisoryResponse
+from fastapi import APIRouter
+try:
+    from backend.app.services.fon_agent import fon_agent_service, AdvisoryRequest, AdvisoryResponse
+except ModuleNotFoundError:
+    from app.services.fon_agent import fon_agent_service, AdvisoryRequest, AdvisoryResponse
 
 router = APIRouter(prefix="/advisory", tags=["Advisory"])
 

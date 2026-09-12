@@ -1,12 +1,28 @@
+import os
 import sys
+from pathlib import Path
+
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
+# Permettre l'import quel que soit le répertoire d'exécution (Render racine ou sous-dossier backend)
+current_file = Path(__file__).resolve()
+backend_dir = current_file.parent.parent
+project_root = backend_dir.parent
+
+for p in [str(project_root), str(backend_dir)]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.app.api.endpoints import detection, advisory, traps, tts
+
+try:
+    from backend.app.api.endpoints import detection, advisory, traps, tts
+except ModuleNotFoundError:
+    from app.api.endpoints import detection, advisory, traps, tts
 
 app = FastAPI(
     title="Mouche Sentinel API",

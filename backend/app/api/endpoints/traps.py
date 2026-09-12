@@ -1,6 +1,9 @@
-﻿from typing import List
+from typing import List
 from fastapi import APIRouter
-from backend.app.services.trap_data import BENIN_SAMPLE_TRAPS, Trap
+try:
+    from backend.app.services.trap_data import BENIN_SAMPLE_TRAPS, Trap
+except ModuleNotFoundError:
+    from app.services.trap_data import BENIN_SAMPLE_TRAPS, Trap
 
 router = APIRouter(prefix="/traps", tags=["Traps"])
 

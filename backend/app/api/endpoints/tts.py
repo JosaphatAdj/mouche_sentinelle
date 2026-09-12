@@ -1,7 +1,10 @@
-﻿from fastapi import APIRouter
+from fastapi import APIRouter
 from pydantic import BaseModel
 from typing import Optional
-from backend.app.services.tts_service import synthesize_fon_audio
+try:
+    from backend.app.services.tts_service import synthesize_fon_audio
+except ModuleNotFoundError:
+    from app.services.tts_service import synthesize_fon_audio
 
 router = APIRouter(prefix="/tts", tags=["TTS"])
 

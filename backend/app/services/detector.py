@@ -1,4 +1,4 @@
-﻿import os
+import os
 import io
 import numpy as np
 from typing import List, Dict, Any, Optional
@@ -25,16 +25,34 @@ class DetectionResult(BaseModel):
     model_source: str      # "real_yolo_onnx" ou "mock_calibrated"
 
 class DetectorService:
-    def __init__(self, models_dir: str = "backend/models"):
-        self.models_dir = models_dir
+    def __init__(self, models_dir: Optional[str] = None):
+        if models_dir is None:
+            # Résolution dynamique absolue basée sur l'emplacement du fichier detector.py
+            current_file = Path(__file__).resolve()
+            # backend/app/services -> backend/models
+            self.models_dir = str(current_file.parent.parent.parent / "models")
+        else:
+            self.models_dir = models_dir
+
         self.onnx_session = None
         self.model_loaded = False
         self._try_load_model()
 
     def _try_load_model(self):
         """Charge prioritairement best.onnx avec onnxruntime (léger, ~180 Mo RAM)."""
-        onnx_path = os.path.join(self.models_dir, "best.onnx")
-        if os.path.exists(onnx_path):
+        candidate_paths = [
+            os.path.join(self.models_dir, "best.onnx"),
+            "backend/models/best.onnx",
+            "models/best.onnx"
+        ]
+        
+        onnx_path = None
+        for p in candidate_paths:
+            if os.path.exists(p):
+                onnx_path = p
+                break
+
+        if onnx_path:
             try:
                 import onnxruntime as ort
                 self.onnx_session = ort.InferenceSession(onnx_path)
